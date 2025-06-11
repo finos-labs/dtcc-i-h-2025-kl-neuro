@@ -137,7 +137,7 @@ def handle_deploy_decision(data):
         wsend("update", "deploying code")
         s = subprocess.run(["node", "scripts/deploy.js"], cwd=BASE_PATH,capture_output=True,text=True)
         wsend("update",f"contract deployed at\n {s.stdout}")
-        print(f"contract deployed at\n {s.stdout}")
+        print(f"\n {s.stdout}")
     else:
         wsend("deployment skipped")
     name = context.get("name", "Unknown")
