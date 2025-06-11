@@ -9,6 +9,7 @@ from Writers.Writedeploy import generate_deploy_script
 from Writers.WriteHardHatConfig import generate_hardhat_config
 from Writers.TestWriter import generate_tests
 from Utils.SocketApp import app,socketio
+from Utils.ZipCreater import create_zip_from_files
 import subprocess
 import re
 import os
@@ -115,16 +116,55 @@ def handle_input_response(data):
 
     wsend("update", "generating deploy script")
     print("Constructor values:", construct_values)
-
+    print(contract_name)
     generate_deploy_script(name=contract_name, args=construct_values)
     wsend("update", "generating hardhat config")
     generate_hardhat_config()
     wsend("update", "creating Test cases")
     generate_tests(working_code, name)
-    wsend("update", "deploying code")
-    s = subprocess.run(["node", "scripts/deploy.js"], cwd=BASE_PATH,capture_output=True,text=True)
-    wsend("update",f"contract deployed at\n {s.stdout}")
-    print(f"contract deployed at\n {s.stdout}")
+    
+    session_context[sid].update({
+        "construct_values": construct_values
+    })
+
+    wsend("request_deploy_decision", "Do you want to deploy the contract? (yes/no)")
+
+@socketio.on('deploy_decision')
+def handle_deploy_decision(data):
+    sid = request.sid
+    context = session_context.get(sid, {})
+    if data is True:
+        wsend("update", "deploying code")
+        s = subprocess.run(["node", "scripts/deploy.js"], cwd=BASE_PATH,capture_output=True,text=True)
+        wsend("update",f"contract deployed at\n {s.stdout}")
+        print(f"contract deployed at\n {s.stdout}")
+    else:
+        wsend("deployment skipped")
+    name = context.get("name", "Unknown")
+    contract_name = context.get("contract_name", "Unknown")
+    print("\n\n")
+    print(name)
+    print(contract_name)
+    print("\n\n")
+    fil = [
+    f"{BASE_PATH}\\contracts\\{name}.sol",
+    f"{BASE_PATH}\\Scripts\\deploy.js",
+    f"{BASE_PATH}\\test\\{name}.js",
+    f"{BASE_PATH}\\artifacts\\contracts\\{name}.sol\\{contract_name}.json",
+    f"{BASE_PATH}\\artifacts\\contracts\\{name}.sol\\{contract_name}.dbg.json"
+    ]
+
+    zip_data = create_zip_from_files(fil)
+
+    socketio.emit('zip_response', zip_data, room=sid)
+    socketio.sleep(0)
+    for file_path in fil:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            print(f"Deleted: {file_path}")
+        else:
+            print(f"Not found for deletion: {file_path}")
+
     wsend("update", "end")
 
 
