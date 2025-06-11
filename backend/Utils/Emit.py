@@ -1,4 +1,4 @@
-from SocketApp import socketio
+from Utils.SocketApp import socketio
 import time
 def usend(event:str,data:str):
     socketio.emit(event, {'data' : data})

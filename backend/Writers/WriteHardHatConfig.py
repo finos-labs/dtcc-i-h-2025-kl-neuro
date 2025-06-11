@@ -1,4 +1,4 @@
-from Emit import *
+from Utils.Emit import *
 
 def generate_hardhat_config():
     wtsend("> Creating a Hardhat config file")

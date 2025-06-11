@@ -3,12 +3,12 @@ from flask_socketio import SocketIO
 import threading
 import time
 import logging
-from Solwriter import WriteSol
-from getinp import extract_constructor_parameters
-from Writedeploy import generate_deploy_script
-from WriteHardHatConfig import generate_hardhat_config
-from TestWriter import generate_tests
-from SocketApp import socketio, app
+from Writers.Solwriter import WriteSol
+from Utils.getinp import extract_constructor_parameters
+from Writers.Writedeploy import generate_deploy_script
+from Writers.WriteHardHatConfig import generate_hardhat_config
+from Writers.TestWriter import generate_tests
+from Utils.SocketApp import app,socketio
 import subprocess
 import re
 

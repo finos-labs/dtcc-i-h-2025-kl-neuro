@@ -1,7 +1,7 @@
 
 import re
 from typing import List
-from Emit import *
+from Utils.Emit import *
 def extract_constructor_parameters(code: str) -> List[str]:
     wtsend("> Extracting inputs")
     match = re.search(r'constructor\s*\((.*?)\)', code, re.DOTALL)

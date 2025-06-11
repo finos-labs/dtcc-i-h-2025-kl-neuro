@@ -1,6 +1,6 @@
 from typing import List
 import os
-from Emit import *
+from Utils.Emit import *
 
 def generate_deploy_script(name: str, args: List[str]):
     os.makedirs("X:\DTCC_HACK\work\hard\Scripts", exist_ok=True)
