@@ -1,5 +1,5 @@
 {
-  "name": "atlas-deepsearch",
+  "name": "neuro",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -8,7 +8,7 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
     "@testing-library/user-event": "^13.5.0",
-    "atlas-deepsearch": "file:",
+    "neuro": "file:",
     "framer-motion": "^12.6.3",
     "highlight.js": "^11.11.1",
     "lucide-react": "^0.484.0",

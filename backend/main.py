@@ -9,8 +9,13 @@ from Writers.Writedeploy import generate_deploy_script
 from Writers.WriteHardHatConfig import generate_hardhat_config
 from Writers.TestWriter import generate_tests
 from Utils.SocketApp import app,socketio
+from Utils.ZipCreater import create_zip_from_files
 import subprocess
 import re
+import os
+from dotenv import load_dotenv
+load_dotenv()
+BASE_PATH = os.getenv("BASE_PATH")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -66,7 +71,7 @@ def handle_prompt(data):
     WriteSol(name, prompt)
 
     wsend("update", "saving contract file")
-    filepath = f"X:\\DTCC_HACK\\work\\hard\\contracts\\{name}.sol"
+    filepath = f"{BASE_PATH}\\contracts\\{name}.sol"
     with open(filepath, "r") as file:
         code = file.read()
 
@@ -77,6 +82,8 @@ def handle_prompt(data):
 
     contract_match = re.search(r'contract\s+(\w+)', code)
     contract_name = contract_match.group(1) if contract_match else "Generated"
+    print("CONTRACT NAME \n\n")
+    print(contract_name)
 
     # Store values for later
     session_context[sid] = {
@@ -109,15 +116,57 @@ def handle_input_response(data):
 
     wsend("update", "generating deploy script")
     print("Constructor values:", construct_values)
-
+    print(contract_name)
     generate_deploy_script(name=contract_name, args=construct_values)
     wsend("update", "generating hardhat config")
     generate_hardhat_config()
     wsend("update", "creating Test cases")
     generate_tests(working_code, name)
-    wsend("update", "deploying code")
-    subprocess.run(["node", "scripts/deploy.js"], cwd="X:\\DTCC_HACK\\work\\hard")
+    
+    session_context[sid].update({
+        "construct_values": construct_values
+    })
+
+    wsend("request_deploy_decision", "Do you want to deploy the contract? (yes/no)")
+
+@socketio.on('deploy_decision')
+def handle_deploy_decision(data):
+    sid = request.sid
+    context = session_context.get(sid, {})
+    if data is True:
+        wsend("update", "deploying code")
+        s = subprocess.run(["node", "scripts/deploy.js"], cwd=BASE_PATH,capture_output=True,text=True)
+        wsend("update",f"contract deployed at\n {s.stdout}")
+        print(f"\n {s.stdout}")
+    else:
+        wsend("deployment skipped")
+    name = context.get("name", "Unknown")
+    contract_name = context.get("contract_name", "Unknown")
+    print("\n\n")
+    print(name)
+    print(contract_name)
+    print("\n\n")
+    fil = [
+    f"{BASE_PATH}\\contracts\\{name}.sol",
+    f"{BASE_PATH}\\Scripts\\deploy.js",
+    f"{BASE_PATH}\\test\\{name}.js",
+    f"{BASE_PATH}\\artifacts\\contracts\\{name}.sol\\{contract_name}.json",
+    f"{BASE_PATH}\\artifacts\\contracts\\{name}.sol\\{contract_name}.dbg.json"
+    ]
+
+    zip_data = create_zip_from_files(fil)
+
+    socketio.emit('zip_response', zip_data, room=sid)
+    socketio.sleep(0)
+    for file_path in fil:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            print(f"Deleted: {file_path}")
+        else:
+            print(f"Not found for deletion: {file_path}")
+
     wsend("update", "end")
+
 
 if __name__ == '__main__':
     logger.info("Starting backend server")

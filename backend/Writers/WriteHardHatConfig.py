@@ -1,5 +1,8 @@
 from Utils.Emit import *
-
+from dotenv import load_dotenv
+load_dotenv()
+import os
+BASE_PATH = os.getenv("BASE_PATH")
 def generate_hardhat_config():
     wtsend("> Creating a Hardhat config file")
     content = """
@@ -16,7 +19,7 @@ def generate_hardhat_config():
         }
         };
         """
-    with open("X:\DTCC_HACK\work\hard\hardhat.config.js", "w", encoding="utf-8") as f:
+    with open(f"{BASE_PATH}\\hardhat.config.js", "w", encoding="utf-8") as f:
         wsend("> ✅ Hardhat config file created")
         f.write(content)
         wsend(content)

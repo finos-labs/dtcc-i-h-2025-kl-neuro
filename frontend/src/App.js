@@ -100,6 +100,27 @@ function App() {
       if(fields.length===0){
         newSocket.emit("inputs_response", {});     }
     });
+    newSocket.on("zip_response", (data) => {
+    console.log("📦 Received zip file");
+    const blob = new Blob([data], { type: "application/zip" });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = "files.zip";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  });
+    newSocket.on("request_deploy_decision", (data) => {
+        const confirmDeploy = window.confirm("Are you sure you want to deploy this contract?");
+
+        if (confirmDeploy) {
+          newSocket.emit("deploy_decision", true);
+        } else {
+          newSocket.emit("deploy_decision", false);
+        }
+
+      
+    });
     
 
 

@@ -9,7 +9,7 @@ from Utils.Emit import *
 
 
 load_dotenv()
-
+BASE_PATH = os.getenv("BASE_PATH")
 
 model = ChatGroq(
     model="mistral-saba-24b",
@@ -37,13 +37,15 @@ def WriteSol(name:str,prompt :str):
     code = match.group(1).strip() if match else result.strip()
     wtsend("Initial Solidity code")
     wsend(code)
-    with open(f"X:\\DTCC_HACK\\work\\hard\\contracts\\{name}.sol", "w") as f:
+    
+    with open(f"{BASE_PATH}\\contracts\\{name}.sol", "w") as f:
         f.write(code)
-    print("Code inserted into file")
-
+        print("Code inserted into file")
+    
+    print(BASE_PATH)
     compileoutput = subprocess.run(
         [r"C:\\Users\\inrup\\AppData\\Roaming\\npm\\npx.cmd", "hardhat", "compile"],
-        cwd="X:\\DTCC_HACK\\work\\hard",
+        cwd=BASE_PATH,
         capture_output=True,
         text=True,
         check=False
@@ -64,10 +66,10 @@ def WriteSol(name:str,prompt :str):
 
         current_code = ""
         try:
-            with open(f"X:\\DTCC_HACK\\work\\hard\\contracts\\{name}.sol", 'r') as file:
+            with open(f"{BASE_PATH}\\contracts\\{name}.sol", 'r') as file:
                 current_code = file.read()
         except FileNotFoundError:
-            print(f"Error: Contract file not found at X:\\DTCC_HACK\\work\\hard\\contracts\\{name}.sol")
+            print(f"Error: Contract file not found at {BASE_PATH}\\contracts\\{name}.sol")
             current_code = "Could not read the contract file."
         wsend("> Modifying Solidity contract code.....")
         messages = [
@@ -119,9 +121,9 @@ def WriteSol(name:str,prompt :str):
         print(corrected_code)
 
 
-        with open(f"X:\\DTCC_HACK\\work\\hard\\contracts\\{name}.sol", "w") as f:
+        with open(f"{BASE_PATH}\\contracts\\{name}.sol", "w") as f:
             f.write(corrected_code)
-        print(f"\nCorrected code saved to X:\\DTCC_HACK\\work\\hard\\contracts\\{name}_corrected.sol")
+            print(f"\nmodified code saved to {BASE_PATH}\\contracts\\{name}.sol")
 
 
     else:

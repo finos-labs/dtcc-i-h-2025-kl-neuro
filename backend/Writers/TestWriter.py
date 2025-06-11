@@ -7,6 +7,8 @@ import subprocess
 from dotenv import load_dotenv
 from Utils.Emit import *
 load_dotenv()
+load_dotenv()
+BASE_PATH = os.getenv("BASE_PATH")
 model = ChatGroq(
     model="mistral-saba-24b",
     temperature=0,
@@ -30,7 +32,7 @@ def generate_tests(code:str,name:str):
     testcode = model.invoke(mess).content
     match = re.search(r'```javascript\s*(.*?)```', testcode, re.DOTALL)
     code = match.group(1).strip() if match else testcode.strip()
-    with open(f"X:\\DTCC_HACK\\work\\hard\\test\\{name}.js", "w") as f:
+    with open(f"{BASE_PATH}\\test\\{name}.js", "w") as f:
         f.write(code)
         wtsend("> Generated test code and saved the file")
         wsend(code)
