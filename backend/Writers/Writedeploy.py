@@ -18,7 +18,7 @@ def generate_deploy_script(name: str, args: List[str]):
         const ContractFactory = await ethers.getContractFactory("{name}", wallet);
         const contract = await ContractFactory.deploy({arg_string});
         await contract.waitForDeployment();
-        console.log("✅ Deployed at:", contract.target);
+        console.log(contract.target);
         }}
 
         main().catch(console.error);

@@ -122,8 +122,11 @@ def handle_input_response(data):
     wsend("update", "creating Test cases")
     generate_tests(working_code, name)
     wsend("update", "deploying code")
-    s = subprocess.run(["node", "scripts/deploy.js"], cwd=BASE_PATH)
+    s = subprocess.run(["node", "scripts/deploy.js"], cwd=BASE_PATH,capture_output=True,text=True)
+    wsend("update",f"contract deployed at\n {s.stdout}")
+    print(f"contract deployed at\n {s.stdout}")
     wsend("update", "end")
+
 
 if __name__ == '__main__':
     logger.info("Starting backend server")
