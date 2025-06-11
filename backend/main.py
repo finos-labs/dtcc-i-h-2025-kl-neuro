@@ -11,6 +11,10 @@ from Writers.TestWriter import generate_tests
 from Utils.SocketApp import app,socketio
 import subprocess
 import re
+import os
+from dotenv import load_dotenv
+load_dotenv()
+BASE_PATH = os.getenv("BASE_PATH")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -66,7 +70,7 @@ def handle_prompt(data):
     WriteSol(name, prompt)
 
     wsend("update", "saving contract file")
-    filepath = f"X:\\DTCC_HACK\\work\\hard\\contracts\\{name}.sol"
+    filepath = f"{BASE_PATH}\\contracts\\{name}.sol"
     with open(filepath, "r") as file:
         code = file.read()
 
@@ -77,6 +81,8 @@ def handle_prompt(data):
 
     contract_match = re.search(r'contract\s+(\w+)', code)
     contract_name = contract_match.group(1) if contract_match else "Generated"
+    print("CONTRACT NAME \n\n")
+    print(contract_name)
 
     # Store values for later
     session_context[sid] = {
@@ -116,7 +122,7 @@ def handle_input_response(data):
     wsend("update", "creating Test cases")
     generate_tests(working_code, name)
     wsend("update", "deploying code")
-    subprocess.run(["node", "scripts/deploy.js"], cwd="X:\\DTCC_HACK\\work\\hard")
+    s = subprocess.run(["node", "scripts/deploy.js"], cwd=BASE_PATH)
     wsend("update", "end")
 
 if __name__ == '__main__':

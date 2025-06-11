@@ -1,9 +1,11 @@
 from typing import List
 import os
 from Utils.Emit import *
-
+from dotenv import load_dotenv
+load_dotenv()
+BASE_PATH = os.getenv("BASE_PATH")
 def generate_deploy_script(name: str, args: List[str]):
-    os.makedirs("X:\DTCC_HACK\work\hard\Scripts", exist_ok=True)
+    os.makedirs(f"{BASE_PATH}\\hard\\Scripts", exist_ok=True)
     arg_string = ", ".join([f'"{a}"' if not a.isdigit() else a for a in args])
     wtsend("> Generating a deploy Script")
     content = f"""
@@ -21,9 +23,8 @@ def generate_deploy_script(name: str, args: List[str]):
 
         main().catch(console.error);
         """
-    with open(os.path.join("X:\DTCC_HACK\work\hard\Scripts", "deploy.js"), "w", encoding="utf-8") as f:
+    with open(os.path.join(f"{BASE_PATH}\Scripts", "deploy.js"), "w", encoding="utf-8") as f:
         f.write(content)
-        wtsend("deployed Script \n ")
         wsend(content)
     
     print("Deployment script written")
