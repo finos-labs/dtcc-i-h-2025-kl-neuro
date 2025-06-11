@@ -91,6 +91,9 @@ function App() {
       console.log(data.data.fields)
       setFields(data.data.fields);
       console.log(fields.length)
+      if(fields.length ===0){
+          newSocket.emit("inputs_response", formData);
+      }
     });
     
 
@@ -127,7 +130,7 @@ function App() {
     };
   }, []);
   const sendMessage = () => {
-    socket.emit("prompt", { name : 'funk' ,prompt : "create a smart contract for crowd funding with the fixed raise" });
+    socket.emit("prompt", { name : 'funTrunkk' ,prompt : "Create an ERC-20 token called 'TestCoin' with symbol 'TEST' and total supply of 1 million tokens" });
   };
   const handleDownload = () => {
     if (pdfBlob) {
