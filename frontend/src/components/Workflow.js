@@ -1,11 +1,10 @@
 import { motion, AnimatePresence } from "framer-motion";
 import {
   CheckCircleIcon,
-  ArrowPathIcon,
-  CogIcon,
   CloudArrowUpIcon,
   FlagIcon
 } from "@heroicons/react/24/outline";
+import { LoadingSpinner } from './LoadingSpinner';
 
 const stepVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -13,72 +12,23 @@ const stepVariants = {
   exit: { opacity: 0, x: -20 },
 };
 
-const pulseAnimation = {
-  scale: [1, 1.05, 1],
-  transition: {
-    duration: 1.5,
-    repeat: Infinity,
-    ease: "easeInOut"
-  }
-};
-
-function WorkflowProcess({ updates, contractDetails }) {
+function WorkflowProcess({ updates }) {
   const isComplete = updates[updates.length - 1] === "end";
-  
-  const getStepIcon = (step, isLast, isComplete) => {
-    if (isComplete) return (
-      <motion.div animate={pulseAnimation}>
-        <CheckCircleIcon className="h-6 w-6 text-green-500" />
-      </motion.div>
-    );
-    if (!isLast) return <CheckCircleIcon className="h-6 w-6 text-green-500" />;
+    const getStepIcon = (step, isLast, isComplete) => {
+    if (isComplete) return <CheckCircleIcon className="h-5 w-5 text-green-400" />;
+    if (!isLast) return <CheckCircleIcon className="h-5 w-5 text-green-400" />;
     
-    if (step.includes("Initial")) return (
-      <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}>
-        <CogIcon className="h-6 w-6 text-blue-500" />
-      </motion.div>
-    );
-    if (step.includes("Upload")) return <CloudArrowUpIcon className="h-6 w-6 text-blue-500" />;
-    if (step.includes("Process")) return (
-      <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}>
-        <ArrowPathIcon className="h-6 w-6 text-blue-500" />
-      </motion.div>
-    );
-    if (step === "end") return <FlagIcon className="h-6 w-6 text-green-500" />;
+    // Special icons for processing steps
+    if (step.includes("Initial")) return <LoadingSpinner size="sm" color="blue" />;
+    if (step.includes("Upload")) return <CloudArrowUpIcon className="h-5 w-5 text-blue-400" />;
+    if (step.includes("Process")) return <LoadingSpinner size="sm" color="purple" />;
+    if (step === "end") return <FlagIcon className="h-5 w-5 text-green-400" />;
     
-    return (
-      <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}>
-        <CogIcon className="h-6 w-6 text-blue-500" />
-      </motion.div>
-    );
+    return <LoadingSpinner size="sm" color="blue" />;
   };
 
   return (
-    <div className="space-y-4 p-6 max-w-md mx-auto bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl shadow-lg">
-      {contractDetails && (
-        <div className="mb-6 p-4 bg-white rounded-lg shadow-sm">
-          <h2 className="text-xl font-bold text-gray-800 mb-2">Contract Details</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-gray-500">Type</p>
-              <p className="font-medium">{contractDetails.type}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Language</p>
-              <p className="font-medium">{contractDetails.language}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Framework</p>
-              <p className="font-medium">{contractDetails.framework}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Status</p>
-              <p className="font-medium">{isComplete ? "Completed" : "In Progress"}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
+    <div className="space-y-3 max-h-full overflow-y-auto scrollbar-hide">
       <AnimatePresence>
         {updates.map((step, idx) => {
           const isLast = idx === updates.length - 1;
@@ -92,33 +42,26 @@ function WorkflowProcess({ updates, contractDetails }) {
               exit="exit"
               variants={stepVariants}
               transition={{ duration: 0.4, ease: "easeOut" }}
-              whileHover={{ scale: 1.02 }}
-              layout
             >
-              <div className={`p-5 rounded-xl shadow-sm border-l-4 ${
-                isComplete 
-                  ? "border-green-400 bg-gradient-to-r from-green-50 to-white" 
+              <div className={`bg-gray-700/30 backdrop-blur-sm p-4 rounded-lg border ${
+                isComplete
+                  ? "border-green-500/30 bg-green-500/10" 
                   : showProcessing 
-                    ? "border-blue-400 bg-gradient-to-r from-blue-50 to-white" 
-                    : "border-green-400 bg-gradient-to-r from-green-50 to-white"
-              }`}>
-                <div className="flex items-center gap-4">
+                    ? "border-blue-500/30 bg-blue-500/10" 
+                    : "border-green-500/30 bg-green-500/10"
+              } transition-all duration-300`}>
+                <div className="flex items-center gap-3">
                   <div className="flex-shrink-0">
                     {getStepIcon(step, isLast, isComplete)}
                   </div>
-                  <div>
-                    <p className="text-gray-800 font-medium text-lg">
-                      {step === "end" ? "Process completed successfully!" : step}
-                    </p>
-                    {showProcessing && (
-                      <motion.p 
-                        className="text-blue-600 text-sm mt-1"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.3 }}
-                      >
-                        Processing your request...
-                      </motion.p>
+                  <div className="flex-1">
+                    <p className="text-gray-200 font-medium text-sm">
+                      {step === "end" ? "✨ Process completed" : step}
+                    </p>                    {showProcessing && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <LoadingSpinner size="sm" color="blue" />
+                        <span className="text-xs text-blue-400 animate-pulse">Processing...</span>
+                      </div>
                     )}
                   </div>
                 </div>
