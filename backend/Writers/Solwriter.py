@@ -84,6 +84,7 @@ def WriteSol(name:str,prompt :str):
                 - Always include constructor, necessary state variables, and clear logic.
                 - Add inline comments to explain each part of the code.
                 - Do NOT include pseudocode, markdown formatting, or explanations.
+                - use eth convention
                 - Output ONLY the Solidity code.
                 """),
             HumanMessage(f"""
