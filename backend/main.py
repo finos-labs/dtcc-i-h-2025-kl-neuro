@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from flask_socketio import SocketIO
 import threading
 import time
@@ -11,6 +11,7 @@ from Writers.TestWriter import generate_tests
 from Utils.SocketApp import app,socketio
 from Utils.ZipCreater import create_zip_from_files
 import subprocess
+from langchain_groq import ChatGroq
 import re
 import os
 from dotenv import load_dotenv
@@ -19,7 +20,13 @@ BASE_PATH = os.getenv("BASE_PATH")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
+from flask_cors import CORS
+CORS(app)
+llm = ChatGroq(
+    model="mistral-saba-24b",
+    temperature=0,
+    api_key=os.getenv("GROQ_API_KEY2")
+)
 active_connections = {}
 
 # Store session-specific context (e.g., for each client/session ID)
@@ -166,6 +173,81 @@ def handle_deploy_decision(data):
             print(f"Not found for deletion: {file_path}")
 
     wsend("update", "end")
+
+GENERATED_DIR = os.path.join(app.static_folder, "generated")
+os.makedirs(GENERATED_DIR, exist_ok=True)
+
+@app.route('/generate', methods=['POST'])
+def generate():
+    data = request.get_json()
+    abi = data['abi']
+    address = data['address']
+
+    # Build the prompt
+    prompt = f"""
+            Write a clean, working HTML page that:
+
+            Connects to an Ethereum contract using ethers.js v6.14.3 from CDN
+            Uses this ABI: {abi} (replace with your contract ABI)
+            Uses this contract address: {address} (replace with your contract address)
+
+            Requirements:
+
+            Connect Wallet button (MetaMask) showing connected address when connected
+            Use only: <script src="https://cdn.jsdelivr.net/npm/ethers@6.14.3/dist/ethers.umd.min.js"></script>
+            Show all supported functions to interact with the contract based on the ABI
+            Use ethers.js v6 syntax (not v5)
+            No external CSS frameworks - use inline styles or minimal internal CSS only
+            Clean, modern layout - the page should be modern and full-page with appealing look
+            Handle errors gracefully with user-friendly error messages
+            Responsive design that works on mobile and desktop
+            Loading states for async operations
+            Transaction status feedback (pending, success, failed)
+            Input validation for function parameters
+            Network detection (show current network)
+
+            Technical Specifications:
+
+            Use ethers.BrowserProvider for wallet connection
+            Implement proper async/await error handling
+            Show gas estimates where applicable
+            Display transaction hashes with links to explorer
+            Format addresses and large numbers properly
+            Include disconnect wallet functionality
+            Auto-detect and display all contract functions (read and write)
+            Show function parameters with appropriate input types
+
+            UI/UX Requirements:
+
+            Modern gradient background
+            Glass-morphism effects
+            Smooth animations and transitions
+            Clear visual hierarchy
+            Status indicators (connected/disconnected)
+            Loading spinners for pending operations
+            Success/error notifications
+            Mobile-responsive design
+
+            Deliverable:
+            Return a complete, single HTML file with all CSS and JavaScript inline. The code should be production-ready and work immediately when opened in a browser with MetaMask installed.
+            Format: Provide only the HTML code in triple backticks html ...  with no explanations.
+        """
+    # Call LLM
+    response = llm.invoke(prompt)
+    content = response.content
+    print(content)
+    match_correction = re.search(r'```html(.*?)```', content, re.DOTALL)
+    html_code = match_correction.group(1).strip() if match_correction else content.strip()
+    print(html_code)
+
+    
+
+    html_file_path = os.path.join(GENERATED_DIR, "dapp.html")
+    with open(html_file_path, 'w', encoding='utf-8') as f:
+        f.write(html_code)
+        print("file written")
+    print(html_file_path)
+    return jsonify({"url": "http://127.0.0.1:5000/static/generated/dapp.html"})
 
 
 if __name__ == '__main__':

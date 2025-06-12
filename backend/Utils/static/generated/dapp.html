@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ethereum Contract Interaction</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            color: #fff;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .button {
+            background: #2575fc;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 0;
+            transition: background 0.3s;
+        }
+        .button:hover {
+            background: #1b5bbf;
+        }
+        .input-group {
+            margin: 10px 0;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .status {
+            margin-top: 20px;
+        }
+        .status.success {
+            color: green;
+        }
+        .status.error {
+            color: red;
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #fff;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Ethereum Contract Interaction</h1>
+        <div id="wallet-status">Disconnected</div>
+        <button class="button" id="connect-wallet">Connect Wallet</button>
+        <div id="network-status"></div>
+        <div id="functions"></div>
+        <div id="transaction-status" class="status"></div>
+        <div id="loading" class="spinner" style="display: none;"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.14.3/dist/ethers.umd.min.js"></script>
+    <script>
+        const contractAddress = '0x86eb2eF860DF7b09D0BC311A2F32Ee1a37f02338';
+        const contractABI = [{"inputs":[],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"spender","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Transfer","type":"event"},{"inputs":[{"internalType":"address","name":"","type":"address"},{"internalType":"address","name":"","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"_spender","type":"address"},{"internalType":"uint256","name":"_value","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool","name":"success","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"decimals","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"_to","type":"address"},{"internalType":"uint256","name":"_value","type":"uint256"}],"name":"transfer","outputs":[{"internalType":"bool","name":"success","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_from","type":"address"},{"internalType":"address","name":"_to","type":"address"},{"internalType":"uint256","name":"_value","type":"uint256"}],"name":"transferFrom","outputs":[{"internalType":"bool","name":"success","type":"bool"}],"stateMutability":"nonpayable","type":"function"}];
+
+        let provider;
+        let signer;
+        let contract;
+
+        document.getElementById('connect-wallet').addEventListener('click', async () => {
+            if (!provider) {
+                provider = new ethers.BrowserProvider(window.ethereum);
+                await provider.send("eth_requestAccounts", []);
+                signer = await provider.getSigner();
+                const address = await signer.getAddress();
+                document.getElementById('wallet-status').innerText = `Connected: ${address}`;
+                document.getElementById('connect-wallet').innerText = 'Disconnect Wallet';
+                contract = new ethers.Contract(contractAddress, contractABI, signer);
+                displayFunctions();
+                displayNetwork();
+            } else {
+                provider = null;
+                signer = null;
+                contract = null;
+                document.getElementById('wallet-status').innerText = 'Disconnected';
+                document.getElementById('connect-wallet').innerText = 'Connect Wallet';
+                document.getElementById('functions').innerHTML = '';
+                document.getElementById('network-status').innerText = '';
+            }
+        });
+
+        async function displayFunctions() {
+            const functionsDiv = document.getElementById('functions');
+            functionsDiv.innerHTML = '';
+
+            contractABI.forEach(item => {
+                if (item.type === 'function') {
+                    const functionDiv = document.createElement('div');
+                    functionDiv.className = 'input-group';
+                    functionDiv.innerHTML = `
+                        <label>${item.name}</label>
+                        <input type="text" placeholder="Parameter 1" id="param1-${item.name}">
+                        <input type="text" placeholder="Parameter 2" id="param2-${item.name}" style="display: none;">
+                        <button class="button" onclick="callFunction('${item.name}')">Call</button>
+                    `;
+                    functionsDiv.appendChild(functionDiv);
+                }
+            });
+        }
+
+        async function callFunction(name) {
+            const param1 = document.getElementById(`param1-${name}`).value;
+            const param2 = document.getElementById(`param2-${name}`).value;
+            const params = [param1, param2].filter(p => p);
+
+            document.getElementById('loading').style.display = 'inline-block';
+            document.getElementById('transaction-status').innerText = '';
+
+            try {
+                const tx = await contract[name](...params);
+                const receipt = await tx.wait();
+                document.getElementById('transaction-status').innerText = `Transaction successful: ${receipt.transactionHash}`;
+                document.getElementById('transaction-status').className = 'status success';
+            } catch (error) {
+                document.getElementById('transaction-status').innerText = `Transaction failed: ${error.message}`;
+                document.getElementById('transaction-status').className = 'status error';
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        async function displayNetwork() {
+            const network = await provider.getNetwork();
+            document.getElementById('network-status').innerText = `Network: ${network.name}`;
+        }
+    </script>
+</body>
+</html>
